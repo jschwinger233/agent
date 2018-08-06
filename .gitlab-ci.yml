@@ -1,0 +1,29 @@
+image: projecteru2/footstone:latest
+
+before_script:
+  - export WORKDIR=/.go/src/github.com/projecteru2/
+  - mkdir -p $WORKDIR
+  - cp -r ../agent $WORKDIR
+  - cd $WORKDIR/agent
+
+stages:
+  - test
+  - build
+
+test:
+  stage: test
+  script:
+    - make test
+
+build:
+  stage: build
+  script:
+    - make build
+    - ./make-release
+    - cp *.rpm $CI_PROJECT_DIR
+    - cp *.deb $CI_PROJECT_DIR
+  artifacts:
+    expire_in: 1 week
+    paths:
+      - eru*.rpm
+      - eru*.deb
