@@ -11,6 +11,7 @@ import (
 	"github.com/projecteru2/agent/common"
 	"github.com/projecteru2/agent/engine/status"
 	"github.com/projecteru2/agent/types"
+	coreutils "github.com/projecteru2/core/utils"
 )
 
 func getFilter(extend map[string]string) enginefilters.Args {
@@ -47,28 +48,20 @@ func (e *Engine) detectContainer(ID string, label map[string]string) (*types.Con
 
 	// 生成基准 meta
 	delete(label, common.ERU_MARK)
-	version := "UNKNOWN"
-	if v, ok := label["version"]; ok {
-		version = v
-	}
-	delete(label, "version")
+	_, ports := coreutils.ParseLabels(label)
 	delete(label, "name")
-
-	pubStr, _ := label["publish"]
 	delete(label, "publish")
 
 	// 是否符合 eru pattern，如果一个容器又有 ERU_MARK 又是三段式的 name，那它就是个 ERU 容器
-	container, err := status.GenerateContainerMeta(c, version, label)
+	container, err := status.GenerateContainerMeta(c, label)
 	if err != nil {
 		return container, err
 	}
 	// 计算容器用了多少 CPU
 	container = status.CalcuateCPUNum(container, c, e.cpuCore)
 	// 活着才有发布必要
-	if c.NetworkSettings != nil {
-		if container.Running && pubStr != "" {
-			container.Publish = e.makeContainerPublishInfo(c.NetworkSettings, strings.Split(pubStr, ","))
-		}
+	if c.NetworkSettings != nil && container.Running {
+		container.Publish = coreutils.MakePublishInfo(c.NetworkSettings.Networks, e.node, ports)
 		container.Networks = c.NetworkSettings.Networks
 	}
 

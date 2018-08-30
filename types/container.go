@@ -7,6 +7,7 @@ import (
 	coretypes "github.com/projecteru2/core/types"
 )
 
+// Container define agent view container
 type Container struct {
 	ID          string
 	Pid         int
@@ -15,13 +16,12 @@ type Container struct {
 	Name        string
 	EntryPoint  string
 	Ident       string
-	Version     string
 	CPUNum      float64
 	CPUQuota    int64
 	CPUPeriod   int64
 	Memory      int64
 	Extend      map[string]string
-	Publish     map[string]string
+	Publish     map[string][]string
 	Networks    map[string]*network.EndpointSettings `json:"-"`
 	HealthCheck *coretypes.HealthCheck
 }
