@@ -1,5 +1,5 @@
-hash: 4f9849633d27e91a1501922fadf77436c192b09e0b53f496bca0acc6a63eef07
-updated: 2018-08-27T14:40:41.598094+08:00
+hash: fd54250df523596e24ec12c97a40b168a90933c38ebb899adb5739e6ddac7a74
+updated: 2018-09-12T14:17:55.046253+08:00
 imports:
 - name: github.com/beorn7/perks
   version: 3a771d992973f24aa725d07868b467d1ddfceafb
@@ -31,7 +31,7 @@ imports:
   - digestset
   - reference
 - name: github.com/docker/docker
-  version: fe3bc75cc44ec90afbd126e4576f9f4f829fc0bc
+  version: 738994f77d0c0332455ebfeec0858c3feb6d6994
   subpackages:
   - api
   - api/types
@@ -100,11 +100,12 @@ imports:
   subpackages:
   - difflib
 - name: github.com/projecteru2/core
-  version: 00af33c80009ab6fb2ba01b966e2557e4501c135
+  version: 71fc0e0c3b54eb9492538c1aa13bf78770a479ae
   subpackages:
   - auth
   - auth/simple
   - client
+  - cluster
   - rpc/gen
   - types
   - utils
@@ -128,7 +129,8 @@ imports:
   subpackages:
   - xfs
 - name: github.com/shirou/gopsutil
-  version: 8048a2e9c5773235122027dd585cf821b2af1249
+  version: d93c01e54d1e03600914fc3afaff59b132780a29
+  repo: https://github.com/CMGS/gopsutil.git
   subpackages:
   - cpu
   - docker
@@ -166,7 +168,7 @@ imports:
   - proxy
   - trace
 - name: golang.org/x/sys
-  version: 4910a1d54f876d7b22162a85f4d066d3ee649450
+  version: d0be0721c37eeb5299f245a996a483160fc36940
   subpackages:
   - unix
   - windows
@@ -182,7 +184,7 @@ imports:
   subpackages:
   - googleapis/rpc/status
 - name: google.golang.org/grpc
-  version: e00d24941bcee35dd163f4377d5371349f14baaf
+  version: 9cc4fdbde2304827ffdbc7896f49db40c5536600
   subpackages:
   - balancer
   - balancer/base
