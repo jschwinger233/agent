@@ -11,6 +11,7 @@ import (
 	"github.com/projecteru2/agent/engine/status"
 	"github.com/projecteru2/agent/types"
 	"github.com/projecteru2/core/cluster"
+	engine "github.com/projecteru2/core/engine/docker"
 	coreutils "github.com/projecteru2/core/utils"
 )
 
@@ -60,16 +61,18 @@ func (e *Engine) detectContainer(ID string) (*types.Container, error) {
 	container = status.CalcuateCPUNum(container, c, e.cpuCore)
 	// 活着才有发布必要
 	if c.NetworkSettings != nil && container.Running {
-		container.Publish = coreutils.MakePublishInfo(c.NetworkSettings.Networks, e.node.GetIP(), meta.Publish)
+		networks := map[string]string{}
 		for name, endpoint := range c.NetworkSettings.Networks {
+			networks[name] = endpoint.IPAddress
 			networkmode := enginecontainer.NetworkMode(name)
 			if networkmode.IsHost() {
-				container.LocalIP = e.node.GetIP()
+				container.LocalIP = engine.GetIP(e.node.Endpoint)
 			} else {
 				container.LocalIP = endpoint.IPAddress
 			}
 			break
 		}
+		container.Publish = coreutils.MakePublishInfo(networks, meta.Publish)
 	}
 
 	return container, nil
