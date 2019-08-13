@@ -5,19 +5,19 @@ import (
 	"strings"
 
 	statsdlib "github.com/CMGS/statsd"
-	"github.com/projecteru2/agent/common"
 	"github.com/projecteru2/agent/types"
 	"github.com/projecteru2/core/cluster"
+	coreutils "github.com/projecteru2/core/utils"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 )
 
 // MetricsClient combine statsd and prometheus
 type MetricsClient struct {
-	statsd string
+	statsd       string
 	statsdClient *statsdlib.Client
-	prefix string
-	data   map[string]float64
+	prefix       string
+	data         map[string]float64
 
 	cpuHostUsage     prometheus.Gauge
 	cpuHostSysUsage  prometheus.Gauge
@@ -45,7 +45,10 @@ type MetricsClient struct {
 // NewMetricsClient new a metrics client
 func NewMetricsClient(statsd, hostname string, container *types.Container) *MetricsClient {
 	clables := []string{}
-	for k, v := range container.Labels {
+	labeList := container.Labels
+	delete(labeList, cluster.ERUMark)
+	delete(labeList, cluster.ERUMeta)
+	for k, v := range labeList {
 		l := fmt.Sprintf("%s=%s", k, v)
 		clables = append(clables, l)
 	}
@@ -150,7 +153,7 @@ func NewMetricsClient(statsd, hostname string, container *types.Container) *Metr
 	}, []string{"nic"})
 
 	// TODO 这里已经没有了版本了
-	tag := fmt.Sprintf("%s.%s", hostname, container.ID[:common.SHORTID])
+	tag := fmt.Sprintf("%s.%s", hostname, coreutils.ShortID(container.ID))
 	endpoint := fmt.Sprintf("%s.%s", container.Name, container.EntryPoint)
 	prefix := fmt.Sprintf("%s.%s.%s", cluster.ERUMark, endpoint, tag)
 
@@ -332,7 +335,7 @@ func (m *MetricsClient) checkConn() error {
 	// We needn't try to renew/reconnect because of only supporting UDP protocol now
 	// We should add an `errorCount` to reconnect when implementing TCP protocol
 	var err error
-	if m.statsdClient, err = statsdlib.New(m.statsd, statsdlib.WithErrorHandler(func (err error) {
+	if m.statsdClient, err = statsdlib.New(m.statsd, statsdlib.WithErrorHandler(func(err error) {
 		log.Errorf("[statsd] Sending statsd failed: %v", err)
 	})); err != nil {
 		log.Errorf("[statsd] Connect statsd failed: %v", err)
