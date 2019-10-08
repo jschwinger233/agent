@@ -30,15 +30,14 @@ func (e *Engine) attach(container *types.Container) {
 
 	outr, outw := io.Pipe()
 	errr, errw := io.Pipe()
-	parentCtx, cancel := context.WithCancel(context.Background())
+	ctx := context.Background()
+	cancelCtx, cancel := context.WithCancel(ctx)
 	go func() {
-		ctx := context.Background()
 		options := dockertypes.ContainerAttachOptions{
 			Stream: true,
 			Stdin:  false,
 			Stdout: true,
 			Stderr: true,
-			Logs:   true,
 		}
 		resp, err := e.docker.ContainerAttach(ctx, container.ID, options)
 		if err != nil && err != httputil.ErrPersistEOF {
@@ -48,16 +47,16 @@ func (e *Engine) attach(container *types.Container) {
 		defer resp.Close()
 		defer outw.Close()
 		defer errw.Close()
+		defer cancel()
 		_, err = stdcopy.StdCopy(outw, errw, resp.Reader)
-		log.Infof("[attach] attach %s container %s finished", container.Name, coreutils.ShortID(container.ID))
-		cancel()
 		if err != nil {
 			log.Errorf("[attach] attach get stream failed %s", err)
 		}
+		log.Infof("[attach] attach %s container %s finished", container.Name, coreutils.ShortID(container.ID))
 	}()
 	log.Infof("[attach] attach %s container %s success", container.Name, coreutils.ShortID(container.ID))
 	// attach metrics
-	go e.stat(parentCtx, container)
+	go e.stat(cancelCtx, container)
 	pump := func(typ string, source io.Reader) {
 		buf := bufio.NewReader(source)
 		for {
