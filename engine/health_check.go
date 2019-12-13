@@ -13,8 +13,7 @@ import (
 )
 
 func (e *Engine) healthCheck() {
-	interval := e.config.HealthCheckInterval
-	tick := time.NewTicker(time.Duration(interval) * time.Second)
+	tick := time.NewTicker(time.Duration(e.config.HealthCheckInterval) * time.Second)
 	defer tick.Stop()
 	for ; ; <-tick.C {
 		go e.checkAllContainers()
@@ -60,33 +59,23 @@ func (e *Engine) checkOneContainer(container *types.Container, timeout time.Dura
 		healthy = checkSingleContainerHealthy(container, timeout)
 	}
 	prevHealthy, exists := e.checker.Get(container.ID)
-
-	changed := false
-	defer func() {
-		if changed {
-			if container.Healthy {
-				log.Infof("[checkOneContainer] Container %s resurges", coreutils.ShortID(container.ID))
-			} else {
-				log.Infof("[checkOneContainer] Container %s dies", coreutils.ShortID(container.ID))
-			}
-			if err := e.store.DeployContainer(container, e.node); err != nil {
-				log.Errorf("[checkOneContainer] update deploy status failed %v", err)
-			} else {
-				e.checker.Set(container.ID, healthy)
-			}
-		}
-	}()
-
 	if !exists { // 不存在就直接赋值
-		container.Healthy = healthy
-		changed = true
 		log.Debugf("[checkOneContainer] Container %s has no check before", coreutils.ShortID(container.ID))
-	} else if healthy && !prevHealthy { // 如果健康并且之前是挂了, 那么修改成健康
-		container.Healthy = true
-		changed = true
-	} else if !healthy && prevHealthy { // 如果挂了并且之前是健康, 那么修改成挂了
-		container.Healthy = false
-		changed = true
+	}
+
+	container.Healthy = healthy
+	if !exists || prevHealthy != container.Healthy {
+		if container.Healthy {
+			log.Infof("[checkOneContainer] Container %s resurges", coreutils.ShortID(container.ID))
+		} else {
+			log.Infof("[checkOneContainer] Container %s dies", coreutils.ShortID(container.ID))
+		}
+	}
+
+	if err := e.store.SetContainerStatus(context.Background(), container, e.node); err != nil {
+		log.Errorf("[checkOneContainer] update deploy status failed %v", err)
+	} else {
+		e.checker.Set(container.ID, healthy)
 	}
 	return
 }
